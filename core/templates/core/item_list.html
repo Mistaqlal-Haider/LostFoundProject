@@ -1,0 +1,243 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUUAST - Lost & Found Portal</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        :root {
+            --primary-color: #0d47a1; /* University Blue */
+            --accent-color: #42a5f5;
+            --bg-color: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+        }
+
+        /* Hero Section */
+        .hero-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 80px 0 100px;
+            border-bottom-right-radius: 50px;
+            border-bottom-left-radius: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Floating Search Card */
+        .search-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin-top: -60px; /* Pulls it up into the blue area */
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* Stats Badge */
+        .stat-badge {
+            background: white;
+            color: var(--primary-color);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        /* Item Cards */
+        .item-card {
+            border: none;
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: white;
+            overflow: hidden;
+        }
+        .item-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .card-img-wrapper {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+        }
+        .card-img-top {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .item-card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+
+        /* Custom Buttons */
+        .btn-report {
+            background: white;
+            color: var(--primary-color);
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 12px 30px;
+            transition: all 0.3s;
+        }
+        .btn-report:hover {
+            background: #e3f2fd;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-header text-center">
+        <i class="bi bi-search position-absolute" style="font-size: 15rem; opacity: 0.05; top: -50px; left: -50px;"></i>
+        
+        <div class="container position-relative animate__animated animate__fadeInDown">
+            <img src="{% static 'core/logo.png' %}" onerror="this.style.display='none'" alt="Logo" class="mb-3 rounded-circle shadow-sm bg-white p-2" style="height: 100px; width: 100px; object-fit: contain;">
+            
+            <h1 class="display-4 fw-bold mb-2">Lost & Found Portal</h1>
+            <p class="lead opacity-75 mb-4">Federal Urdu University of Arts, Science & Technology Islamabad</p>
+            
+            <a href="{% url 'add_item' %}" class="btn btn-report shadow">
+                <i class="bi bi-plus-circle-fill me-2"></i>Report an Item
+            </a>
+
+            <div class="mt-4">
+                <div class="stat-badge">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>Lost: {{ total_lost|default:"0" }}
+                </div>
+                <div class="stat-badge">
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>Found: {{ total_found|default:"0" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="search-card animate__animated animate__fadeInUp">
+                    <form method="get" class="row g-3 align-items-center">
+                        <div class="col-md-7">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" name="q" class="form-control border-start-0" placeholder="What are you looking for?" value="{{ query }}">
+                            </div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="status" id="statusAll" value="" {% if not selected_status %}checked{% endif %} onchange="this.form.submit()">
+                                <label class="btn btn-outline-secondary btn-lg" for="statusAll">All</label>
+
+                                <input type="radio" class="btn-check" name="status" id="statusLost" value="LOST" {% if selected_status == 'LOST' %}checked{% endif %} onchange="this.form.submit()">
+                                <label class="btn btn-outline-danger btn-lg" for="statusLost">Lost</label>
+
+                                <input type="radio" class="btn-check" name="status" id="statusFound" value="FOUND" {% if selected_status == 'FOUND' %}checked{% endif %} onchange="this.form.submit()">
+                                <label class="btn btn-outline-success btn-lg" for="statusFound">Found</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="row g-4">
+            {% for item in items %}
+            <div class="col-md-4 col-sm-6 animate__animated animate__fadeIn">
+                <div class="card item-card h-100 shadow-sm">
+                    
+                    <div class="card-img-wrapper bg-light">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" class="card-img-top {% if item.status == 'RETURNED' %}grayscale{% endif %}">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                                <i class="bi bi-image fs-1 opacity-25"></i>
+                            </div>
+                        {% endif %}
+
+                        <div class="position-absolute top-0 end-0 p-3">
+                            {% if item.status == 'LOST' %}
+                                <span class="badge bg-danger shadow-sm px-3 py-2 rounded-pill">LOST</span>
+                            {% elif item.status == 'FOUND' %}
+                                <span class="badge bg-success shadow-sm px-3 py-2 rounded-pill">FOUND</span>
+                            {% elif item.status == 'RETURNED' %}
+                                <span class="badge bg-secondary shadow-sm px-3 py-2 rounded-pill">RETURNED</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold mb-1 text-truncate">{{ item.title }}</h5>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-geo-alt-fill text-danger"></i> {{ item.location }} &bull; 
+                            {{ item.date_reported|timesince }} ago
+                        </p>
+                        
+                        <p class="card-text text-secondary" style="font-size: 0.9rem;">
+                            {{ item.description|truncatewords:15 }}
+                        </p>
+
+                        <hr class="my-3 opacity-10">
+
+                        {% if item.status != 'RETURNED' %}
+                            <div class="d-grid gap-2">
+                                <a href="https://wa.me/{{ item.contact_number }}?text=Hello, I saw your post about '{{ item.title }}'..." target="_blank" class="btn btn-success rounded-pill btn-sm fw-bold">
+                                    <i class="bi bi-whatsapp me-1"></i> Contact
+                                </a>
+                                
+                                <form action="{% url 'mark_returned' item.pk %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-primary btn-sm w-100 rounded-pill" onclick="return confirm('Mark as Resolved?')">
+                                        <i class="bi bi-check2-circle me-1"></i> Mark as Returned
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-secondary py-2 text-center mb-0 small rounded-pill">
+                                <i class="bi bi-lock-fill"></i> Case Closed
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="mb-3 text-muted opacity-25">
+                    <i class="bi bi-box-seam" style="font-size: 5rem;"></i>
+                </div>
+                <h3>No Items Found</h3>
+                <p class="text-muted">There are no reported items matching your search.</p>
+                <a href="{% url 'add_item' %}" class="btn btn-primary rounded-pill mt-2">Report New Item</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <footer class="bg-white py-4 mt-auto border-top text-center">
+        <p class="text-muted small mb-0">&copy; 2025 Lost & Found Portal | <strong>FUUAST</strong></p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <style>
+        .grayscale { filter: grayscale(100%); opacity: 0.7; }
+    </style>
+</body>
+</html>
